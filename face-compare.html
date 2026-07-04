@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Face Recognition Compare: dlib (face-api.js) vs SFace (OpenCV.js)</title>
+<link rel="icon" href="data:,">
+<style>
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #111;
+    color: #eee;
+    padding: 16px;
+  }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  p.sub { font-size: 13px; color: #aaa; margin: 0 0 16px; }
+
+  #layout { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+
+  #camPanel { flex: 0 0 auto; }
+  video { width: 360px; height: 270px; background: #000; border-radius: 8px; }
+  #camCanvas { display: none; }
+
+  .slots { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+  .slot {
+    width: 110px;
+    text-align: center;
+    font-size: 12px;
+  }
+  .slot canvas {
+    width: 110px;
+    height: 82px;
+    background: #222;
+    border-radius: 6px;
+    border: 2px solid #444;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .slot canvas.filled { border-color: #3fbf5f; }
+  .slot button { width: 100%; margin-top: 2px; }
+
+  button {
+    font-size: 13px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 6px;
+    background: #2d6cdf;
+    color: white;
+    cursor: pointer;
+  }
+  button.secondary { background: #555; }
+  button.secondary:hover { background: #777; }
+  button:hover { background: #4a83ee; }
+  button:disabled { background: #555; cursor: not-allowed; }
+
+  #startBtn { margin-bottom: 8px; }
+  #compareBtn { margin-top: 14px; font-size: 15px; padding: 10px 18px; }
+
+  #status { font-size: 12px; color: #8f8; margin-top: 10px; white-space: pre-line; }
+
+  #results { flex: 1 1 400px; min-width: 320px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #333; padding: 8px 10px; text-align: left; }
+  th { background: #1c1c1c; }
+  .good { color: #3fbf5f; font-weight: bold; }
+  .bad { color: #ff5050; font-weight: bold; }
+  .note { font-size: 12px; color: #999; margin-top: 10px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<h1>人脸识别对比：dlib (face-api.js，你现有系统) vs SFace (OpenCV.js)</h1>
+<p class="sub">拍 3 张照片：A1/A2 是同一个人的两张不同照片，B 是另一个人。两套引擎各自算相似度，比较区分度。</p>
+
+<div id="layout">
+  <div id="camPanel">
+    <button id="startBtn">Start camera</button>
+    <div><video id="video" autoplay playsinline muted></video></div>
+    <canvas id="camCanvas"></canvas>
+
+    <div class="slots">
+      <div class="slot">
+        <canvas id="slotA1" width="220" height="164"></canvas>
+        <div>A1 (本人 #1)</div>
+        <button id="captureA1" disabled>Capture</button>
+        <button id="uploadBtnA1" class="secondary">Upload file</button>
+        <input type="file" id="uploadA1" accept="image/*" style="display:none">
+      </div>
+      <div class="slot">
+        <canvas id="slotA2" width="220" height="164"></canvas>
+        <div>A2 (本人 #2)</div>
+        <button id="captureA2" disabled>Capture</button>
+        <button id="uploadBtnA2" class="secondary">Upload file</button>
+        <input type="file" id="uploadA2" accept="image/*" style="display:none">
+      </div>
+      <div class="slot">
+        <canvas id="slotB" width="220" height="164"></canvas>
+        <div>B (另一个人)</div>
+        <button id="captureB" disabled>Capture</button>
+        <button id="uploadBtnB" class="secondary">Upload file</button>
+        <input type="file" id="uploadB" accept="image/*" style="display:none">
+      </div>
+    </div>
+
+    <button id="compareBtn" disabled>Compare (跑两套引擎)</button>
+    <div id="status">Status: click Start camera</div>
+  </div>
+
+  <div id="results">
+    <table id="resultTable" style="display:none">
+      <thead>
+        <tr><th>引擎</th><th>same-person (A1 vs A2)</th><th>diff-person (A1 vs B)</th><th>区分度 (margin)</th></tr>
+      </thead>
+      <tbody id="resultBody"></tbody>
+    </table>
+    <div class="note" id="resultNote"></div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const nativeWarn = console.warn.bind(console);
+    console.warn = (...args) => {
+      if (typeof args[0] === "string" && args[0].includes("is already registered")) return;
+      nativeWarn(...args);
+    };
+  })();
+</script>
+<script src="lib/face-api.js"></script>
+<script src="lib/ort.min.js"></script>
+<script src="yunet.js"></script>
+<script src="face-compare.js"></script>
+</body>
+</html>
